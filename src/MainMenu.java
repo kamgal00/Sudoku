@@ -1,4 +1,9 @@
 import javax.swing.*;
+
+import sudoku.generator.Difficulty;
+import sudoku.generator.Generator;
+import sudoku.generator.Grid;
+
 import java.awt.*;
 
 public class MainMenu{
@@ -10,9 +15,6 @@ public class MainMenu{
     private JButton exitButton;
     public MainMenu(){
         frame = new JFrame();
-        frame.setSize(400, 600);
-        frame.setVisible(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         GridBagLayout gbl = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
@@ -22,12 +24,7 @@ public class MainMenu{
         frame.add(panel);
 
         title = new JLabel("SUDOKU");
-        title.setFont(new Font("Serif", Font.PLAIN, 45));
-        // title.setSize(300, 500);
-        // title.setAlignmentX(Component.CENTER_ALIGNMENT);
-        // title.setAlignmentY(Component.CENTER_ALIGNMENT);
-        // title.setHorizontalAlignment(SwingConstants.CENTER);
-        // title.setVerticalAlignment(SwingConstants.CENTER);
+        title.setFont(new Font("Serif", Font.PLAIN, 40));
         gbc.gridx=0; gbc.gridy=0;
         gbc.insets.set(0, 0, 70, 0);
         panel.add(title, gbc);
@@ -37,6 +34,11 @@ public class MainMenu{
         gbc.ipady=0;
         gbc.fill=GridBagConstraints.HORIZONTAL;
         gbc.insets.set(10, 0, 10, 0);
+        newGame.addActionListener((e)->{
+            Grid gg = Generator.generateSudoku(Difficulty.MEDIUM);
+            System.out.println(gg);
+            System.out.println("---");
+        });
         panel.add(newGame, gbc);
 
         gameFromSeed=new JButton("Load game from seed");
@@ -46,5 +48,9 @@ public class MainMenu{
         exitButton=new JButton("Exit");
         gbc.gridy=3;
         panel.add(exitButton, gbc);
+
+        frame.setSize(400, 600);
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 }
