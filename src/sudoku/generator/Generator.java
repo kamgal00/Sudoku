@@ -1,7 +1,5 @@
 package sudoku.generator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -11,7 +9,8 @@ import java.util.function.Predicate;
 import sudoku.generator.Grid.FieldContainer;
 import java.util.ArrayList;
 import java.util.Collections;
-
+import sudoku.Field;
+import sudoku.solver.*;
 public class Generator {
 
     public static void solveSudoku(Grid grid, SudokuSolution s, Predicate<SudokuSolution> ender){
@@ -76,35 +75,7 @@ public class Generator {
         solveSudoku(g, s, (a)->a.hasSolution());
         return new Grid(s.solution);
     }
-    // private static class GridState{
-    //     Grid grid;
-    //     int state;
-    //     List<Field> moves;
-    //     List<Integer> vals;
-    //     public GridState(Grid g, List<Field> moves) {
-    //         grid=g;
-    //         this.moves=moves;
-    //         state=0;
-    //         vals=new ArrayList<>(81);
-    //         for(Field f: moves) {
-    //             vals.add(grid.grid[f.x][f.y]);
-    //         }
-    //     }
-    //     public void goToState(int newState) {
-    //         while(state<newState) {
-    //             grid.resetField(moves.get(state));
-    //             state++;
-    //         }
-    //         while(state>newState) {
-    //             state--;
-    //             grid.setField(moves.get(state), vals.get(state));
-    //         }
-    //     }
-    //     public List<Field> getRemaining() {
-    //         return moves.subList(state, 81);
-    //     }
-    // }
-    private static Grid gS(Difficulty d, AtomicBoolean running) {
+    private static GeneratorResult gS(Difficulty d, AtomicBoolean running) {
         Random seedGen = new Random();
         main_loop:
         while(running.get()){
@@ -114,42 +85,51 @@ public class Generator {
             List<Field> moves = new ArrayList<>(Field.allFields);
             SudokuSolution s=new SudokuSolution();
             Collections.shuffle(moves, r);
-            // GridState gs = new GridState(g, moves);
-            // int left=0, right=81, mid=0;
-            // while(left<right) {
-            //     mid=(left+right+1)/2;
-            //     gs.goToState(mid);
-            //     s=new SudokuSolution();
-            //     solveSudoku(g, s, (ss)->ss.solutionsNumber>1);
-            //     if(s.solutionsNumber>1) {
-            //         right=mid-1;
-            //     }
-            //     else{
-            //         left=mid;
-            //     }
-                
-            // }
             int difficulty=0;
-            // List<Field> remaining = gs.getRemaining();
             for(Field f:moves.subList(0, 35)) {
                 g.resetField(f);
             }
             solveSudoku(g, s, (ss)->ss.solutionsNumber>1);
             if(s.solutionsNumber>1) continue main_loop;
-            for(Field f:moves.subList(35, 71)) {
+            for(Field f:moves.subList(35, 81)) {
                 if(!running.get()) return null;
                 int prev = g.grid[f.x][f.y];
                 g.resetField(f);
-                s=new SudokuSolution();
-                solveSudoku(g, s, (ss)->ss.solutionsNumber>1);
-                if(s.solutionsNumber>1) {
+                // s=new SudokuSolution();
+                // solveSudoku(g, s, (ss)->ss.solutionsNumber>1);
+                // if(s.solutionsNumber>1) {
+                //     g.setField(f, prev);
+                // }
+                // else{
+                //     difficulty=s.difficulty*100+g.empty.size();
+                //     if (d.match(difficulty)) {
+                //         System.out.println("Got difficulty "+difficulty);
+                //         return new GeneratorResult(g, seed, difficulty);
+                //     }
+                //     else if(difficulty>=d.max) {
+                //         continue main_loop;
+                //     }
+                // }
+                
+                int rating =0;
+                ArrayList<String> tech = new ArrayList<>();
+                try {
+                    // System.out.println("New Rate:");
+                    rating = SudokuSolver.rate(g.grid, tech);
+                }
+                catch(Exception e){
+                    e.printStackTrace();
+                    return null;
+                }
+                if(rating<0) {
                     g.setField(f, prev);
                 }
-                else{
-                    difficulty=s.difficulty*100+g.empty.size();
+                else {
+                    difficulty = rating;
                     if (d.match(difficulty)) {
                         System.out.println("Got difficulty "+difficulty);
-                        return g;
+                        tech.stream().forEach(System.out::println);
+                        return new GeneratorResult(g, seed, difficulty);
                     }
                     else if(difficulty>=d.max) {
                         continue main_loop;
@@ -158,21 +138,22 @@ public class Generator {
             }
             System.out.println("Got difficulty "+difficulty);
             if(d.match(difficulty)){
-                return g;
+                return new GeneratorResult(g, seed, difficulty);
             }
         }
         return null;
     }
-    public static Grid generateSudoku(Difficulty d) {
+    public static GeneratorResult generateSudoku(Difficulty d, AtomicBoolean running) {
         int threads=Runtime.getRuntime().availableProcessors();
-        List<Callable<Grid>> generators = new ArrayList<>();
-        AtomicBoolean running = new AtomicBoolean(true);
+        // int threads=1;
+        List<Callable<GeneratorResult>> generators = new ArrayList<>();
+        running.set(true);
         for(int i=0;i<threads;i++) {
             generators.add(()->gS(d, running));
         }
         ExecutorService es = Executors.newFixedThreadPool(threads);
         try{
-            Grid g = es.invokeAny(generators);
+            GeneratorResult g = es.invokeAny(generators);
             running.set(false);
             es.shutdown();
             es.awaitTermination(30, TimeUnit.SECONDS);

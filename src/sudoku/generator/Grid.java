@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import sudoku.*;
 public class Grid {
     class FieldContainer{
         Set<Field> fields;
@@ -115,7 +116,22 @@ public class Grid {
         }
         return out;
     }
-
+    public Set<Field> getInterferingFields(Field f) {
+        Set<Field> out = new HashSet<>();
+        for(FieldContainer c: cont.get(f)) {
+            out.addAll(c.fields);
+        }
+        out.remove(f);
+        return out;
+    } 
+    public Set<Field> getFieldsWithNum(int num) {
+        if(num==0) return new HashSet<>();
+        Set<Field> out = new HashSet<>();
+        for(Field f : Field.allFields) {
+            if(num==grid[f.x][f.y]) out.add(f);
+        }
+        return out;
+    }
     @Override
     public String toString(){
         StringBuilder out=new StringBuilder();
@@ -126,5 +142,8 @@ public class Grid {
             out.append("\n");
         }
         return out.toString();
+    }
+    public Integer getFieldVal(Field f) {
+        return grid[f.x][f.y];
     }
 }

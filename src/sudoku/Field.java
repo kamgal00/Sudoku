@@ -1,4 +1,4 @@
-package sudoku.generator;
+package sudoku;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 public class Field {
-    final int x, y;
+    public final int x, y;
     private static final Field[][] fields=new Field[9][9];
     public static final Set<Field> allFields=new HashSet<>();
     static{
