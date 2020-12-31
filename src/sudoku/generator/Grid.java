@@ -28,6 +28,7 @@ public class Grid {
         }
     }
     public int[][] grid = new int[9][9];
+    int[] occurences = new int[9];
     private final Map<Field, Set<FieldContainer>> cont = new HashMap<>();
     private Map<Field, Map<Integer, Integer>> pos = new HashMap<>();
     Set<Field> empty;
@@ -45,6 +46,7 @@ public class Grid {
             containers.add(new FieldContainer(Field.getColumn(i)));
             containers.add(new FieldContainer(Field.getRow(i)));
             containers.add(new FieldContainer(Field.getSquare(i%3, i/3)));
+            occurences[i]=0;
         }
         for(FieldContainer c : containers){
             for(Field f : c.fields) {
@@ -86,6 +88,7 @@ public class Grid {
             }
         }
         grid[f.x][f.y]=0;
+        occurences[val-1]--;
     }
     public void setField(Field f, int val) {
         resetField(f);
@@ -100,6 +103,10 @@ public class Grid {
             }
         }
         grid[f.x][f.y]=val;
+        occurences[val-1]++;
+    }
+    public Set<Integer> getFinishedNumbers(){
+        return IntStream.range(0, 9).filter(i->occurences[i]==9).map(i->i+1).boxed().collect(Collectors.toSet());
     }
     public Set<Field> getEmpty(){
         return new HashSet<>(empty);

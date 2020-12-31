@@ -1,5 +1,6 @@
 package sudoku.solver.techniques;
 
+import sudoku.solver.LogInfo;
 import sudoku.solver.SudokuGrid;
 
 import java.util.*;
@@ -8,7 +9,7 @@ import java.util.stream.IntStream;
 import sudoku.Field;
 public class HiddenSinBox extends Technique{
     public int cost = 1;
-    public HiddenSinBox(SudokuGrid grid,ArrayList<String> log) {
+    public HiddenSinBox(SudokuGrid grid,ArrayList<LogInfo> log) {
         super(grid, log);
     }
     @Override
@@ -29,7 +30,8 @@ public class HiddenSinBox extends Technique{
                     // System.out.println("HiddenSinBox: Setting "+(i+1)+" to field "+ex[i]);
                     grid.setField(ex[i], i+1);
                     // System.out.println("HiddentSinBox: Possibilities for field "+ex[i]+" after set: "+grid.pN.get(ex[i]));
-                    log.add("HiddenSinBox, field "+ex[i]+" num "+(i+1));
+                    log.add(new LogInfo(toString(), Set.of(ex[i]), null, box, Set.of(i+1), true));
+                    // log.add("HiddenSinBox, field "+ex[i]+" num "+(i+1));
                     return cost;
                 }
             }
@@ -43,6 +45,6 @@ public class HiddenSinBox extends Technique{
     }
     @Override
     public String toString() {
-        return "HiddenSinBox";
+        return "Hidden Single in Box";
     }
 }

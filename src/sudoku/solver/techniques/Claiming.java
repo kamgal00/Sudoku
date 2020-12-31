@@ -1,12 +1,13 @@
 package sudoku.solver.techniques;
 
+import sudoku.solver.LogInfo;
 import sudoku.solver.SudokuGrid;
 import java.util.*;
 import sudoku.Field;
 public class Claiming extends Technique {
     int cost = 20;
     Map<Set<Field>, Set<Integer>> checked = new HashMap<>();
-    public Claiming(SudokuGrid grid, ArrayList<String> log) {
+    public Claiming(SudokuGrid grid, ArrayList<LogInfo> log) {
         super(grid, log);
         for(Set<Field> row : SudokuGrid.rows){
             checked.put(row, new HashSet<>());
@@ -39,7 +40,8 @@ public class Claiming extends Technique {
                             didChanged |= grid.pN.get(f).remove(num);
                         }
                         if(didChanged) {
-                            log.add("Claiming: row "+row.stream().findAny().get().y+" fields "+possibleFieldsForNum+" num "+num);
+                            log.add(new LogInfo(toString(), possibleFieldsForNum, toUpdate ,row, Set.of(num), false));
+                            // log.add("Claiming: row "+row.stream().findAny().get().y+" fields "+possibleFieldsForNum+" num "+num);
                             return cost;
                         }
                     }
@@ -67,7 +69,8 @@ public class Claiming extends Technique {
                             didChanged |= grid.pN.get(f).remove(num);
                         }
                         if(didChanged) {
-                            log.add("Claiming: column "+column.stream().findAny().get().y+" fields "+possibleFieldsForNum+" num "+num);
+                            log.add(new LogInfo(toString(), possibleFieldsForNum, toUpdate ,column, Set.of(num), false));
+                            // log.add("Claiming: column "+column.stream().findAny().get().y+" fields "+possibleFieldsForNum+" num "+num);
                             return cost;
                         }
                     }

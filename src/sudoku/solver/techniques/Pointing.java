@@ -1,5 +1,6 @@
 package sudoku.solver.techniques;
 
+import sudoku.solver.LogInfo;
 import sudoku.solver.SudokuGrid;
 import java.util.*;
 import sudoku.*;
@@ -7,7 +8,7 @@ public class Pointing extends Technique {
     public int cost = 9;
     Map<Set<Field>, Set<Integer>> checked = new HashMap<>(); 
 
-    public Pointing(SudokuGrid grid, ArrayList<String> log) {
+    public Pointing(SudokuGrid grid, ArrayList<LogInfo> log) {
         super(grid,log);
         for(Set<Field> box : SudokuGrid.boxes) {
             checked.put(box, new HashSet<>());
@@ -37,7 +38,8 @@ public class Pointing extends Technique {
                         didChanged |= grid.pN.get(f).remove(num);
                     }
                     if(didChanged){
-                        log.add("Pointing: fields "+pos+ " num "+num);
+                        log.add(new LogInfo(toString(),  pos, elseFields, SudokuGrid.getColumn(example), Set.of(num), false));
+                        // log.add("Pointing: fields "+pos+ " num "+num);
                         return cost;
                     }
                 }
@@ -50,7 +52,8 @@ public class Pointing extends Technique {
                         didChanged |= grid.pN.get(f).remove(num);
                     }
                     if(didChanged){
-                        log.add("Pointing: fields "+pos+ " num "+num);
+                        log.add(new LogInfo(toString(),  pos, elseFields, SudokuGrid.getRow(example), Set.of(num), false));
+                        // log.add("Pointing: fields "+pos+ " num "+num);
                         return cost;
                     }
                 }

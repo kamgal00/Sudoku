@@ -1,13 +1,15 @@
 package sudoku.solver.techniques;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 import sudoku.Field;
+import sudoku.solver.LogInfo;
 import sudoku.solver.SudokuGrid;
 
 public class NakedSin extends Technique {
     public int cost = 8;
-    public NakedSin(SudokuGrid grid, ArrayList<String> log) {
+    public NakedSin(SudokuGrid grid, ArrayList<LogInfo> log) {
         super(grid,log);
     }
 
@@ -17,7 +19,8 @@ public class NakedSin extends Technique {
             if(grid.pN.get(f).size()==1) {
                 int num = grid.pN.get(f).stream().findAny().get();
                 grid.setField(f, num);
-                log.add("NakedSin: field "+f+" num "+num);
+                log.add(new LogInfo(toString(), Set.of(f), null, null, Set.of(num), true));
+                // log.add("NakedSin: field "+f+" num "+num);
                 return cost;
             }
         }
@@ -31,6 +34,6 @@ public class NakedSin extends Technique {
 
     @Override
     public String toString() {
-        return "NakedSin";
+        return "Naked Single";
     }
 }

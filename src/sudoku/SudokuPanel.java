@@ -1,13 +1,18 @@
 package sudoku;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.IntStream;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import sudoku.generator.Grid;
+import sudoku.solver.LogInfo;
+import sudoku.solver.SudokuSolver;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -20,20 +25,111 @@ public class SudokuPanel extends JPanel {
     boolean didWin=false;
     Runnable onWin;
     JButton[][] buttons = new JButton[9][9];
-    JLabel drawingMode = new JLabel("Input mode: normal (press 'a' to toggle)");
-    JLabel infoLabel = new JLabel("Use mouse/arrows/ctrl + arrows to select");
+    JPanel downPanel= new JPanel();
+    JPanel infoPanel = new JPanel();
+    JLabel drawingMode = new JLabel("Input mode: normal (press 'a' to toggle)  ");
+    JLabel infoLabel = new JLabel("Use mouse/arrows/ctrl + arrows to select  ");
+    JButton hintButton = new JButton("Hints");
     AdnPanel[][] adn = new AdnPanel[9][9];
     Dimension fieldDim = new Dimension(20,20);
     Set<Field> constants = new HashSet<>();
     private Font fieldFont = new Font("Serif", Font.PLAIN, 20);
     private Font anFont = new Font("Serif", Font.PLAIN, 10);
     private Font butsFont = new Font("Serif", Font.PLAIN, 15);
+
+    JPanel rightSidePanel = new JPanel();
+    private JLabel[] filledNums = new JLabel[9];
+
+    // hints
+    Color targetColor = Color.GREEN, changedColor = Color.CYAN, subsetColor = Color.GRAY;
+    ArrayList<LogInfo> hints = new ArrayList<>();
+    JPanel hintPanel = new JPanel();
+    JButton nextHint=new JButton("Next hint");
+    JButton previousHint = new JButton("Previous hint");
+    JLabel techniqueLabel = new JLabel();
+    JLabel numbersLabel = new JLabel();
+    boolean hintMode = false;
+    int currentIndex=0;
+    private void resetHintMode() {
+        if(!hintMode) return;
+        hintMode=false;
+        downPanel.remove(hintPanel);
+        downPanel.add(infoPanel);
+        repaintButtons();
+    }
+    private void initHints() {
+        hintPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx=0;
+        gbc.gridy=0;
+        gbc.gridheight=2;
+        hintPanel.add(previousHint,gbc);
+        gbc.gridx=2;
+        hintPanel.add(nextHint,gbc);
+        gbc.gridx=1;
+        gbc.gridheight=1;
+        hintPanel.add(techniqueLabel,gbc);
+        gbc.gridy=1;
+        hintPanel.add(numbersLabel, gbc);
+
+        previousHint.addActionListener(e ->selectHint(currentIndex-1));
+        nextHint.addActionListener(e ->selectHint(currentIndex+1));
+        nextHint.addKeyListener(kl);
+        previousHint.addKeyListener(kl);
+
+    }
+    private void generateHints() {
+        if(hintMode) return;
+        hintMode=true;
+        hints.clear();
+        SudokuSolver.rate(grid.grid, hints);
+        if(hints.size()==0) {
+            hintMode=false;
+            return;
+        }
+        downPanel.remove(infoPanel);
+        downPanel.add(hintPanel);
+        selectHint(0);
+        revalidate();
+        repaint();
+    }
+    private void selectHint(int index) {
+        LogInfo li=null;
+        selectedField=null;
+        try{
+            li=hints.get(index);
+        }
+        catch(Exception e) { return;}
+        // li.printAll();
+        currentIndex=index;
+        techniqueLabel.setText("  Method: "+li.methodName+"  ");
+        numbersLabel.setText((li.numbers.size()==1 ?"  Number: " : "Numbers: ")+li.numbers.stream().map(i->String.valueOf(i)).reduce((a,b)->a+", "+b).get()+"  ");
+        repaintButtons();
+        for(Field f: li.container) buttons[f.x][f.y].setBackground(subsetColor);
+        for(Field f: li.changedFields) buttons[f.x][f.y].setBackground(changedColor);
+        for(Field f: li.targetFields) buttons[f.x][f.y].setBackground(targetColor);
+        if(index==0) {
+            previousHint.setEnabled(false);
+        }
+        else {
+            previousHint.setEnabled(true);
+        }
+        if(index==hints.size()-1) {
+            nextHint.setEnabled(false);
+        }
+        else {
+            nextHint.setEnabled(true);
+        }
+        if(li.targetFields.size()==1) selectedField=li.targetFields.stream().findAny().get();
+    }
+
     private void redrawFields() {
         int newS = Math.min(getWidth(), getHeight())/12;
         fieldDim.setSize(newS, newS);
         fieldFont = new Font("Serif", Font.PLAIN, newS/2);
         anFont = new Font("Serif", Font.PLAIN, newS/4);
-        butsFont = new Font("Serif", Font.PLAIN, newS/3);
+        int butSize = (int) Math.round(newS/3.5);
+        butsFont = new Font("Serif", Font.PLAIN, butSize );
         for(Field f : Field.allFields) {
             buttons[f.x][f.y].setPreferredSize(fieldDim);
             buttons[f.x][f.y].setFont(fieldFont);
@@ -41,6 +137,12 @@ public class SudokuPanel extends JPanel {
         }
         drawingMode.setFont(butsFont);
         infoLabel.setFont(butsFont);
+        previousHint.setFont(butsFont);
+        nextHint.setFont(butsFont);
+        techniqueLabel.setFont(butsFont);
+        numbersLabel.setFont(butsFont);
+        hintButton.setFont(butsFont);
+        IntStream.range(0, 9).forEach(i-> filledNums[i].setFont(fieldFont));
         revalidate();
         repaint();
     }
@@ -50,11 +152,12 @@ public class SudokuPanel extends JPanel {
 
         @Override
         public void keyPressed(KeyEvent e) {
+            resetHintMode();
             try{
                 if(e.getKeyChar()=='a') {
                     adnMode=!adnMode;
-                    if(adnMode) drawingMode.setText("Input mode: annotation (press 'a' to toggle)");
-                    else drawingMode.setText("Input mode: normal (press 'a' to toggle)");
+                    if(adnMode) drawingMode.setText("Input mode: annotation (press 'a' to toggle)  ");
+                    else drawingMode.setText("Input mode: normal (press 'a' to toggle)  ");
                     return;
                 }
                 if(e.getKeyCode()==KeyEvent.VK_UP ||
@@ -104,15 +207,17 @@ public class SudokuPanel extends JPanel {
         this.grid = grid;
         constants = new HashSet<>(grid.getOccupied());
         initButtons();
+        initHints();
         drawComponents();
-        repaintButtons();
         addComponentListener(cl);
+        repaintButtons();
     }
     public void resetSelected(){
         selectedField=null;
         repaintButtons();
     }
     public void setVal(int val) {
+        resetHintMode();
         if(selectedField==null) return;
         if(constants.contains(selectedField)) return;
         if(val<0 || val>9) return;
@@ -140,6 +245,7 @@ public class SudokuPanel extends JPanel {
             if(grid.grid[selectedField.x][selectedField.y]!=0) return;
             adn[selectedField.x][selectedField.y].changeNum(val);
         }
+
         repaintButtons();
     }
 
@@ -183,6 +289,7 @@ public class SudokuPanel extends JPanel {
                 b.setText(String.valueOf(grid.getFieldVal(f)));
             }
             b.addActionListener((e)->{
+                resetHintMode();
                 selectedField=f;
                 repaintButtons();
             });
@@ -212,6 +319,10 @@ public class SudokuPanel extends JPanel {
                 buttons[f.x][f.y].setBackground(interferring);
             }
             buttons[selectedField.x][selectedField.y].setBackground(selected);
+        }
+        Set<Integer> filled = grid.getFinishedNumbers();
+        for(int i=0;i<9;i++) {
+            filledNums[i].setForeground(filled.contains(i+1)? Color.GREEN : Color.DARK_GRAY);
         }
         revalidate();
         repaint();
@@ -253,12 +364,55 @@ public class SudokuPanel extends JPanel {
         gbc.gridx=0;
         gbc.gridwidth=11;
         gbc.ipady=5;
-        add(drawingMode, gbc);
-        gbc.gridy=13;
+
+        add(downPanel, gbc);
+        infoPanel.setLayout(new GridBagLayout());
         gbc.gridx=0;
-        gbc.gridwidth=11;
-        gbc.ipady=5;
-        add(infoLabel, gbc);
+        gbc.gridy=0;
+        gbc.gridwidth=1;
+        gbc.gridheight=1;
+        gbc.weightx=1.0;
+        gbc.weighty=1.0;
+        gbc.fill= GridBagConstraints.CENTER;
+        infoPanel.add(drawingMode,gbc);
+        gbc.gridy=1;
+        infoPanel.add(infoLabel, gbc);
+        gbc.gridx=1;
+        gbc.gridy=0;
+        gbc.gridheight=2;
+        infoPanel.add(hintButton,gbc);
+        hintButton.addKeyListener(kl);
+
+        downPanel.add(infoPanel);
+
+        hintButton.addActionListener(e->{
+            generateHints();
+            nextHint.requestFocusInWindow();
+        });
+
+        rightSidePanel.setLayout(new BoxLayout(rightSidePanel, BoxLayout.Y_AXIS));
+
+        for(int i =0;i<9;i++) {
+            filledNums[i] = new JLabel("   "+String.valueOf(i+1)+" ");
+            filledNums[i].setForeground(Color.GREEN);
+            rightSidePanel.add(filledNums[i]);
+        }
+
+        gbc.gridx=12;
+        gbc.gridy=0;
+        gbc.gridwidth=1;
+        gbc.gridheight=11;
+        gbc.weightx=0;
+        gbc.weighty=0;
+
+        add(rightSidePanel, gbc);
+
+        // add(drawingMode, gbc);
+        // gbc.gridy=13;
+        // gbc.gridx=0;
+        // gbc.gridwidth=11;
+        // gbc.ipady=5;
+        // add(infoLabel, gbc);
     }
 }
 

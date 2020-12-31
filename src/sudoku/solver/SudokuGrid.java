@@ -13,6 +13,8 @@ public class SudokuGrid {
     public static ArrayList<Set<Field>> boxes=new ArrayList<>();
     public static ArrayList<Set<Field>> columns=new ArrayList<>();
     public static ArrayList<Set<Field>> rows=new ArrayList<>();
+    public static ArrayList<Set<Field>> containers = new ArrayList<>();
+    public static ArrayList<Set<Field>> lines = new ArrayList<>();
     public static Map<Set<Field>, Set<Set<Field>>> intersectingBoxes = new HashMap<>();
     static Set<Integer> numSet = new HashSet<>(IntStream.range(1, 10).boxed().collect(Collectors.toSet()));
     public Set<Field> empty = new HashSet<>(Field.allFields);
@@ -61,6 +63,10 @@ public class SudokuGrid {
                 intersectingBoxes.get(column).add(getBox(f));
             }
         }
+        lines.addAll(columns);
+        lines.addAll(rows);
+        containers.addAll(boxes);
+        containers.addAll(lines);
     }
 
     public static Set<Field> getBox(Field f) {

@@ -95,26 +95,10 @@ public class Generator {
                 if(!running.get()) return null;
                 int prev = g.grid[f.x][f.y];
                 g.resetField(f);
-                // s=new SudokuSolution();
-                // solveSudoku(g, s, (ss)->ss.solutionsNumber>1);
-                // if(s.solutionsNumber>1) {
-                //     g.setField(f, prev);
-                // }
-                // else{
-                //     difficulty=s.difficulty*100+g.empty.size();
-                //     if (d.match(difficulty)) {
-                //         System.out.println("Got difficulty "+difficulty);
-                //         return new GeneratorResult(g, seed, difficulty);
-                //     }
-                //     else if(difficulty>=d.max) {
-                //         continue main_loop;
-                //     }
-                // }
                 
                 int rating =0;
-                ArrayList<String> tech = new ArrayList<>();
+                ArrayList<LogInfo> tech = new ArrayList<>();
                 try {
-                    // System.out.println("New Rate:");
                     rating = SudokuSolver.rate(g.grid, tech);
                 }
                 catch(Exception e){
@@ -145,7 +129,6 @@ public class Generator {
     }
     public static GeneratorResult generateSudoku(Difficulty d, AtomicBoolean running) {
         int threads=Runtime.getRuntime().availableProcessors();
-        // int threads=1;
         List<Callable<GeneratorResult>> generators = new ArrayList<>();
         running.set(true);
         for(int i=0;i<threads;i++) {
