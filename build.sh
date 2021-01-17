@@ -1,2 +1,2 @@
 #!/bin/bash
-javac -d target $(find src -name "*.java")
+javac -d target "$(find src -name "*.java")"
