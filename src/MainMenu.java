@@ -10,7 +10,7 @@ public class MainMenu{
     private JPanel panel;
     private JLabel title;
     private JButton newGame;
-    private JButton gameFromSeed;
+    // private JButton gameFromSeed;
     private JButton exitButton;
 
     ComponentListener cl = new ComponentListener() {
@@ -44,7 +44,7 @@ public class MainMenu{
         Font butF = new Font(Font.SERIF, Font.PLAIN, newS/4);
         title.setFont(titleF);
         newGame.setFont(butF);
-        gameFromSeed.setFont(butF);
+        // gameFromSeed.setFont(butF);
         exitButton.setFont(butF);
 
     }
@@ -79,13 +79,16 @@ public class MainMenu{
         });
         panel.add(newGame, gbc);
 
-        gameFromSeed=new JButton("Load game from seed");
-        gbc.gridy=2;
-        panel.add(gameFromSeed, gbc);
+        // gameFromSeed=new JButton("Load game from seed");
+        // gbc.gridy=2;
+        // panel.add(gameFromSeed, gbc);
 
         exitButton=new JButton("Exit");
         gbc.gridy=3;
         panel.add(exitButton, gbc);
+        exitButton.addActionListener((e)->{
+            frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
+        });
     }
     public void addToFrame() {
         frame.add(panel);

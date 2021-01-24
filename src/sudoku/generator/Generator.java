@@ -111,8 +111,8 @@ public class Generator {
                 else {
                     difficulty = rating;
                     if (d.match(difficulty)) {
-                        System.out.println("Got difficulty "+difficulty);
-                        tech.stream().forEach(System.out::println);
+                        // System.out.println("Got difficulty "+difficulty);
+                        // tech.stream().forEach(System.out::println);
                         return new GeneratorResult(g, seed, difficulty);
                     }
                     else if(difficulty>=d.max) {
@@ -120,7 +120,7 @@ public class Generator {
                     }
                 }
             }
-            System.out.println("Got difficulty "+difficulty);
+            // System.out.println("Got difficulty "+difficulty);
             if(d.match(difficulty)){
                 return new GeneratorResult(g, seed, difficulty);
             }
